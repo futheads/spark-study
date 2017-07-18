@@ -104,7 +104,7 @@ public final class LogQuery {
         });
 
         List<Tuple2<Tuple3<String, String, String>, Stats>> output = counts.collect();
-        for (Tuple2<?, ?> t: output) {
+        for (Tuple2<?, ?> t : output) {
             System.out.println(t._1() + "\t" + t._2());
         }
 
