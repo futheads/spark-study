@@ -1,17 +1,15 @@
 package com.futhead.java.sql;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import scala.actors.threadpool.Arrays;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * Created by futhead on 17-7-18.
@@ -24,6 +22,7 @@ public class SQLDataSourceExample {
         runBasicDataSourceExample(spark);
         rubBasicParquetExample(spark);
         runParquetSchemaMergingExample(spark);
+        runJdbcDatasetExample(spark);
 
         spark.stop();
     }
@@ -75,6 +74,25 @@ public class SQLDataSourceExample {
 
         Dataset<Row> mergedDF = spark.read().option("mergeSchema", true).parquet("/home/futhead/app/spark-2.0.2-bin-hadoop2.6/test_table");
         mergedDF.printSchema();
+    }
+
+    private static void runJdbcDatasetExample(SparkSession spark) {
+
+        Dataset<Row> peopleDF = spark.read().format("json").json("/home/futhead/app/spark-2.0.2-bin-hadoop2.6/examples/src/main/resources/people.json");
+        peopleDF.write().format("jdbc")
+                .option("url", "jdbc:mysql://localhost:3306")
+                .option("dbtable", "spark.people")
+                .option("user", "futhead")
+                .option("password", "futhead")
+                .save();
+
+        Dataset<Row> jdbcDF = spark.read().format("jdbc")
+                .option("url", "jdbc:mysql://localhost:3306")
+                .option("dbtable", "spark.people")
+                .option("user", "futhead")
+                .option("password", "futhead")
+                .load();
+        jdbcDF.show();
     }
 
     public static class Square implements Serializable {
