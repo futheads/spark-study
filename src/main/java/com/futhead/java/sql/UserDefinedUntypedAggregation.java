@@ -6,7 +6,12 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.expressions.MutableAggregationBuffer;
 import org.apache.spark.sql.expressions.UserDefinedAggregateFunction;
 import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by futhead on 17-7-21.
@@ -29,6 +34,20 @@ public class UserDefinedUntypedAggregation {
     }
 
     public static class MyAverage extends UserDefinedAggregateFunction {
+
+        private StructType inputSchema;
+        private StructType bufferSchema;
+
+        public MyAverage() {
+            List<StructField> inputFields = new ArrayList<StructField>();
+            inputFields.add(DataTypes.createStructField("inputColumn", DataTypes.LongType, true));
+            inputSchema = DataTypes.createStructType(inputFields);
+
+            List<StructField> bufferFields = new ArrayList<StructField>();
+            bufferFields.add(DataTypes.createStructField("sum", DataTypes.LongType, true));
+            bufferFields.add(DataTypes.createStructField("count", DataTypes.LongType, true));
+            bufferSchema = DataTypes.createStructType(bufferFields);
+        }
 
         public StructType inputSchema() {
             return null;
