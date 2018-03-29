@@ -16,7 +16,9 @@ public class SparkPi {
 
     public static void main(String[] args) {
 
-        SparkSession spark = SparkSession.builder().master("local").appName("SparkPi").getOrCreate();
+//        SparkSession spark = SparkSession.builder().master("local[*]").appName("SparkPi").getOrCreate();
+        
+        SparkSession spark = SparkSession.builder().appName("SparkPi").getOrCreate();
 
         JavaSparkContext jsc = new JavaSparkContext(spark.sparkContext());
 

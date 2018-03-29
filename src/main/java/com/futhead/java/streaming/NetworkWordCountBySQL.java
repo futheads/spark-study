@@ -17,9 +17,9 @@ import java.util.Iterator;
 public class NetworkWordCountBySQL {
 
     public static void main(String[] args) throws StreamingQueryException {
-        SparkSession spark = SparkSession.builder().appName("NetworkWordCount").master("local[2]").getOrCreate();
+        SparkSession spark = SparkSession.builder().appName("NetworkWordCount").master("local").getOrCreate();
 
-        Dataset<Row> lines = spark.readStream().format("socket").option("host", "localhost").option("port", 9999).load();
+        Dataset<Row> lines = spark.readStream().format("socket").option("host", "study01").option("port", 9999).load();
 
         Dataset<String> words = lines.as(Encoders.STRING()).flatMap(new FlatMapFunction<String, String>() {
             public Iterator<String> call(String s) throws Exception {
