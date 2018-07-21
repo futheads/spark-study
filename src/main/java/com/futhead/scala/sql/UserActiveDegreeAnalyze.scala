@@ -10,6 +10,7 @@ object UserActiveDegreeAnalyze {
 
   case class UserActionLog(logId: Long, userId: Long, actionTime: String, actionType: Long, purchaseMoney: Double)
   case class UserActionLogVO(logId: Long, userId: Long, actionValue: Long)
+  case class UserActionLogWithPurchaseMoneyVo(logId: Long, userId: Long, purchaseMoney: Double)
 
   def main(args: Array[String]): Unit = {
     val startDate = "2016-09-01"
@@ -53,20 +54,65 @@ object UserActiveDegreeAnalyze {
 //      .show()
 
     //统计最近一个周期相对上一个周期访问次数增长最多的10个用户
-    val userActionLogInFirstPeriod = userActionLog.as[UserActionLog]
-      .filter("actionTime >= '2016-10=01' and actionTime <= '2016-10-31' and actionType = 0")
-      .map(userActionLogEntry => UserActionLogVO(userActionLogEntry.logId, userActionLogEntry.userId, 1))
-    val userActionLogInSecondPeriod = userActionLog.as[UserActionLog]
-      .filter("actionTime >= '2016-01-01' and actionTime <= '2016-09-30' and actionType = 0")
-      .map(userActionLogEntry => UserActionLogVO(userActionLogEntry.logId, userActionLogEntry.userId, -1))
-    val userActionLogDS = userActionLogInFirstPeriod.union(userActionLogInSecondPeriod)
+//    val userActionLogInFirstPeriod = userActionLog.as[UserActionLog]
+//      .filter("actionTime >= '2016-10-01' and actionTime <= '2016-10-31' and actionType = 0")
+//      .map(userActionLogEntry => UserActionLogVO(userActionLogEntry.logId, userActionLogEntry.userId, 1))
+//    val userActionLogInSecondPeriod = userActionLog.as[UserActionLog]
+//      .filter("actionTime >= '2016-01-01' and actionTime <= '2016-09-30' and actionType = 0")
+//      .map(userActionLogEntry => UserActionLogVO(userActionLogEntry.logId, userActionLogEntry.userId, -1))
+//    val userActionLogDS = userActionLogInFirstPeriod.union(userActionLogInSecondPeriod)
+//
+//    userActionLogDS.join(userBaseInfo, userActionLogDS("userId") === userBaseInfo("userId"))
+//      .groupBy(userBaseInfo("userId"), userBaseInfo("username"))
+//      .agg(sum(userActionLogDS("actionValue")).alias("actionIncr"))
+//      .sort($"actionIncr".desc)
+//      .limit(10)
+//      .show()
 
-    userActionLogDS.join(userBaseInfo, userActionLogDS("userId") === userBaseInfo("userId"))
+    //统计最近一个周期相比上一个周期购买金额增长最多的10个用户
+//    val userAcitonLogInFirstPeriod = userActionLog.as[UserActionLog]
+//      .filter("actionTime >= '2016-10-01' and actionTime <= '2016-10-31' and actionType = 1")
+//      .map(userActionLogEntry => UserActionLogWithPurchaseMoneyVo(userActionLogEntry.logId, userActionLogEntry.userId, userActionLogEntry.purchaseMoney))
+//    val userActionLogInSecondPeriod = userActionLog.as[UserActionLog]
+//      .filter("actionTime >= '2016-01-01' and actionTime <= '2016-09-30' and actionType = 1")
+//      .map(userActionLogEntry => UserActionLogWithPurchaseMoneyVo(userActionLogEntry.logId, userActionLogEntry.userId, -userActionLogEntry.purchaseMoney))
+//
+//    val userActionLogWithPurchaseMoneyDS = userAcitonLogInFirstPeriod.union(userActionLogInSecondPeriod)
+//    userActionLogWithPurchaseMoneyDS.show()
+//    userActionLogWithPurchaseMoneyDS.join(userBaseInfo, userActionLogWithPurchaseMoneyDS("userId") === userBaseInfo("userId"))
+//      .groupBy(userBaseInfo("userId"), userBaseInfo("username"))
+//      .agg(round(sum(userActionLogWithPurchaseMoneyDS("purchaseMoney")), 2).alias("purchaseMoneyIncr"))
+//      .sort($"purchaseMoneyIncr".desc)
+//      .limit(10)
+//      .show()
+
+    //用户活跃度
+    //统计指定注册时间范围内头7天访问次数最高的10个用户
+    userActionLog.join(userBaseInfo, userActionLog("userId") === userBaseInfo("userId"))
+      .filter(userBaseInfo("registTime") >= "2016-10-01"
+        && userBaseInfo("registTime") <= "2016-10-31"
+        && userActionLog("actionTime") >= userBaseInfo("registTime")
+        && userActionLog("actionTime") <= date_add(userBaseInfo("registTime"), 7)
+        && userActionLog("actionType") === 0)
       .groupBy(userBaseInfo("userId"), userBaseInfo("username"))
-      .agg(sum(userActionLogDS("actionValue")).alias("actionIncr"))
-      .sort($"actionIncr".desc)
+      .agg(count(userActionLog("logId")).alias("actionCount"))
+      .sort($"actionCount".desc)
       .limit(10)
       .show()
+
+    //统计指定注册时间范围内头7天消费最高的10个用户
+    userActionLog.join(userBaseInfo, userActionLog("userId") === userBaseInfo("userId"))
+      .filter(userBaseInfo("registTime") >= "2016-10-01"
+        && userBaseInfo("registTime") <= "2016-10-31"
+        && userActionLog("actionTime") >= userBaseInfo("registTime")
+        && userActionLog("actionTime") <= date_add(userBaseInfo("registTime"), 7)
+        && userActionLog("actionType") === 1)
+      .groupBy(userBaseInfo("userId"), userBaseInfo("username"))
+      .agg(round(sum(userActionLog("purchaseMoney")), 2).alias("purchaseMoneyTotal"))
+      .sort($"purchaseMoneyTotal".desc)
+      .limit(10)
+      .show()
+
   }
 
 }
