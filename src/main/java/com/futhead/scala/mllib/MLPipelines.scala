@@ -13,20 +13,27 @@ object MLPipelines {
 
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder().master("local[*]").appName("MLPipelines").getOrCreate()
-    val training = spark.createDataFrame(
-      Seq((0L, "a b c d e spark", 1.0), (1L, "b d", 0.0), (2L, "spark f g h", 1.0), (3L, "hadoop mapreduce", 0.0)))
-      .toDF("id", "text", "label")
-    val tokenizer = new Tokenizer().setInputCol("text").setOutputCol("words")
-    val hashingTF = new HashingTF().setNumFeatures(1000).setInputCol(tokenizer.getOutputCol).setOutputCol("features")
-    val lr = new LogisticRegression().setMaxIter(10).setRegParam(0.01)
-    val pipeline = new Pipeline().setStages(Array(tokenizer, hashingTF, lr))
-    val model = pipeline.fit(training)
+//    val training = spark.createDataFrame(
+//      Seq(("a b c d e spark", 1.0), ("b d", 2.0), ("spark f g h", 3.0), ("hadoop mapreduce", 4.0)))
+//      .toDF("text", "label")
+//    val tokenizer = new Tokenizer().setInputCol("text").setOutputCol("words")
+//    val hashingTF = new HashingTF().setNumFeatures(1000).setInputCol(tokenizer.getOutputCol).setOutputCol("features")
+//    val lr = new LogisticRegression().setMaxIter(10).setRegParam(0.01)
+//    val pipeline = new Pipeline().setStages(Array(tokenizer, hashingTF, lr))
+//    val model = pipeline.fit(training)
+
+    // Now we can optionally save the fitted pipeline to disk
+//    model.write.overwrite().save("spark-logistic-regression-model")
+
+    // We can also save this unfit pipeline to disk
+//    pipeline.write.overwrite().save("/tmp/unfit-lr-model")
+
+    // And load it back in during production
+    val sameModel = PipelineModel.load("spark-logistic-regression-model")
 
     val test = spark.createDataFrame(Seq((4L, "spark i j k"),(5L, "l m n"),(6L, "spark a"),(7L, "apache hadoop")))
       .toDF("id", "text")
-    model.transform(test).select("id", "text", "probability", "prediction").collect().foreach {
-      case Row(id: Long, text: String, prob: Vector, prediction: Double) =>
-        println(s"($id, $text) --> prob=$prob, prediction=$prediction")
-    }
+    sameModel.transform(test).show()
+
   }
 }
